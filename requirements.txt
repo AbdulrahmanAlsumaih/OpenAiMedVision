@@ -1,0 +1,33 @@
+# Core Framework
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
+pydantic-settings==2.10.1
+
+# HTTP Client (for routing to external LLM services)
+httpx==0.28.1
+requests==2.32.4
+
+# Utilities
+python-multipart==0.0.20
+python-dotenv==1.1.1
+aiofiles==24.1.0
+
+# Security & Validation
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+
+# Testing
+pytest==8.4.1
+pytest-asyncio==1.0.0
+pytest-cov==6.2.1
+
+# Development
+black==25.1.0
+isort==6.0.1
+flake8==7.3.0
+mypy==1.16.1
+
+# Monitoring & Logging
+structlog==25.4.0
+prometheus-client==0.22.1 
