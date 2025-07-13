@@ -4,7 +4,9 @@ Logging configuration and utilities
 
 import logging
 import sys
+
 import structlog
+
 from app.core.config import settings
 
 
@@ -21,9 +23,11 @@ def setup_logging() -> structlog.BoundLogger:
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer()
-            if settings.LOG_FORMAT == "json"
-            else structlog.dev.ConsoleRenderer(),
+            (
+                structlog.processors.JSONRenderer()
+                if settings.LOG_FORMAT == "json"
+                else structlog.dev.ConsoleRenderer()
+            ),
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -43,4 +47,4 @@ def setup_logging() -> structlog.BoundLogger:
 
 def get_logger(name: str = None) -> structlog.BoundLogger:
     """Get a logger instance"""
-    return structlog.get_logger(name) 
+    return structlog.get_logger(name)

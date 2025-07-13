@@ -3,6 +3,7 @@ Application configuration using Pydantic settings
 """
 
 from typing import List, Optional
+
 from pydantic import validator
 from pydantic_settings import BaseSettings
 
@@ -62,4 +63,4 @@ settings = Settings()
 
 def get_settings() -> Settings:
     """Get application settings"""
-    return settings 
+    return settings

@@ -1,0 +1,5 @@
+[
+  "tests/test_basic.py::test_api_test_endpoint",
+  "tests/test_basic.py::test_health_endpoint",
+  "tests/test_basic.py::test_root_endpoint"
+]
