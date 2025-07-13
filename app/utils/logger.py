@@ -9,10 +9,8 @@ from typing import Any, Dict
 import structlog
 from app.core.config import settings
 
-
 def setup_logging() -> structlog.BoundLogger:
     """Setup structured logging configuration"""
-    
     # Configure structlog
     structlog.configure(
         processors=[
@@ -31,19 +29,15 @@ def setup_logging() -> structlog.BoundLogger:
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
-    
     # Configure standard library logging
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=getattr(logging, settings.LOG_LEVEL.upper()),
     )
-    
     # Create logger
     logger = structlog.get_logger()
-    
     return logger
-
 
 def get_logger(name: str = None) -> structlog.BoundLogger:
     """Get a logger instance"""
