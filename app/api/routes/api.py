@@ -7,6 +7,7 @@ from fastapi import APIRouter
 # Create main API router
 api_router = APIRouter()
 
+
 # For now, we'll add a simple test endpoint
 @api_router.get("/test")
 async def test_endpoint():
