@@ -40,6 +40,8 @@ class ModelListResponse(BaseModel):
 
 @router.get("/", response_model=ModelListResponse)
 async def list_models():
-    """List available models (mock)"""
-    model = ModelInfo(id="medgemma-vision", permission=[ModelPermission()])
+    model = ModelInfo(
+        id="medgemma-vision",
+        permission=[ModelPermission()]
+    )
     return ModelListResponse(data=[model])

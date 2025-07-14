@@ -44,19 +44,28 @@ async def create_completion(request: CompletionRequest):
     if request.model != "medgemma-vision":
         raise HTTPException(
             status_code=400,
-            detail=f"Model {request.model} not supported. Use 'medgemma-vision'",
+            detail=(
+                f"Model {request.model} not supported. Use 'medgemma-vision'"
+            ),
         )
-    # Mock completion
     completion_text = f"[MOCK COMPLETION] You said: {request.prompt}"
     now = int(time.time())
     return CompletionResponse(
         id=f"cmpl-{now}",
         created=now,
         model=request.model,
-        choices=[CompletionChoice(text=completion_text, index=0, finish_reason="stop")],
+        choices=[
+            CompletionChoice(
+                text=completion_text,
+                index=0,
+                finish_reason="stop",
+            )
+        ],
         usage=CompletionUsage(
             prompt_tokens=len(request.prompt.split()),
             completion_tokens=len(completion_text.split()),
-            total_tokens=len(request.prompt.split()) + len(completion_text.split()),
+            total_tokens=(
+                len(request.prompt.split()) + len(completion_text.split())
+            ),
         ),
     )
