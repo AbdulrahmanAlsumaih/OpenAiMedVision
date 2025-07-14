@@ -4,6 +4,7 @@ Logging configuration and utilities
 
 import logging
 import sys
+from typing import Optional
 
 import structlog
 
@@ -45,6 +46,6 @@ def setup_logging() -> structlog.BoundLogger:
     return logger
 
 
-def get_logger(name: str = None) -> structlog.BoundLogger:
+def get_logger(name: Optional[str] = None) -> structlog.BoundLogger:
     """Get a logger instance"""
     return structlog.get_logger(name)
