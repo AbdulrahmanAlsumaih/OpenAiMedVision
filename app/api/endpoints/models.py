@@ -9,6 +9,7 @@ from typing import List, Any
 
 router = APIRouter()
 
+
 class ModelPermission(BaseModel):
     id: str = Field(default="modelperm-1")
     object: str = Field(default="model_permission")
@@ -23,6 +24,7 @@ class ModelPermission(BaseModel):
     group: Any = None
     is_blocking: bool = False
 
+
 class ModelInfo(BaseModel):
     id: str
     object: str = "model"
@@ -30,15 +32,14 @@ class ModelInfo(BaseModel):
     owned_by: str = "organization-owner"
     permission: List[ModelPermission] = Field(default_factory=list)
 
+
 class ModelListResponse(BaseModel):
     object: str = "list"
     data: List[ModelInfo]
 
+
 @router.get("/", response_model=ModelListResponse)
 async def list_models():
     """List available models (mock)"""
-    model = ModelInfo(
-        id="medgemma-vision",
-        permission=[ModelPermission()]
-    )
-    return ModelListResponse(data=[model]) 
+    model = ModelInfo(id="medgemma-vision", permission=[ModelPermission()])
+    return ModelListResponse(data=[model])

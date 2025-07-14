@@ -27,7 +27,9 @@ api_router.include_router(chat_router, prefix="/chat", tags=["chat"])
 api_router.include_router(models_router, prefix="/models", tags=["models"])
 
 # Include completions router
-api_router.include_router(completions_router, prefix="/completions", tags=["completions"])
+api_router.include_router(
+    completions_router, prefix="/completions", tags=["completions"]
+)
 
 # Include generation router
 api_router.include_router(generation_router, prefix="/generation", tags=["generation"])
