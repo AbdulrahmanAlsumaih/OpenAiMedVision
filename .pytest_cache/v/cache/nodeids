@@ -1,5 +1,14 @@
 [
   "tests/test_basic.py::test_api_test_endpoint",
   "tests/test_basic.py::test_health_endpoint",
-  "tests/test_basic.py::test_root_endpoint"
+  "tests/test_basic.py::test_root_endpoint",
+  "tests/test_chat.py::test_chat_completions_endpoint",
+  "tests/test_chat.py::test_chat_completions_invalid_model",
+  "tests/test_chat.py::test_chat_completions_missing_messages",
+  "tests/test_chat.py::test_chat_completions_mixed_formats",
+  "tests/test_chat.py::test_chat_completions_text_format",
+  "tests/test_chat.py::test_chat_completions_with_image",
+  "tests/test_chat.py::test_get_generation",
+  "tests/test_chat.py::test_list_models",
+  "tests/test_chat.py::test_text_completion"
 ]

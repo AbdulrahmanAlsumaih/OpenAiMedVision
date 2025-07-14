@@ -87,6 +87,10 @@ def create_app() -> FastAPI:
     # Global exception handler
     @app.exception_handler(Exception)
     async def global_exception_handler(request, exc):
+        # Don't handle HTTPException as it's already handled by FastAPI
+        if isinstance(exc, HTTPException):
+            raise exc
+        
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
         return JSONResponse(
             status_code=500,
