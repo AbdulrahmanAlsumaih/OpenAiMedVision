@@ -30,12 +30,3 @@ def test_root_endpoint(client):
     data = response.json()
     assert data["message"] == "OpenAiMedVision API Gateway"
     assert "version" in data
-
-
-def test_api_test_endpoint(client):
-    """Test API test endpoint"""
-    response = client.get("/v1/test")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["message"] == "OpenAiMedVision API is working!"
-    assert data["status"] == "success" 

@@ -3,9 +3,10 @@ Text completion endpoint for OpenAI/OpenRouter-compatible API
 """
 
 import time
+from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional, List
 
 router = APIRouter()
 
@@ -44,9 +45,7 @@ async def create_completion(request: CompletionRequest):
     if request.model != "medgemma-vision":
         raise HTTPException(
             status_code=400,
-            detail=(
-                f"Model {request.model} not supported. Use 'medgemma-vision'"
-            ),
+            detail=(f"Model {request.model} not supported. Use 'medgemma-vision'"),
         )
     completion_text = f"[MOCK COMPLETION] You said: {request.prompt}"
     now = int(time.time())
@@ -64,8 +63,6 @@ async def create_completion(request: CompletionRequest):
         usage=CompletionUsage(
             prompt_tokens=len(request.prompt.split()),
             completion_tokens=len(completion_text.split()),
-            total_tokens=(
-                len(request.prompt.split()) + len(completion_text.split())
-            ),
+            total_tokens=(len(request.prompt.split()) + len(completion_text.split())),
         ),
     )

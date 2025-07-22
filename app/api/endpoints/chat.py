@@ -2,14 +2,14 @@
 Chat completions endpoint for OpenAI-compatible API
 """
 
+import asyncio
 import json
 import time
-from typing import List, Optional, Dict, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, root_validator
 from fastapi.responses import StreamingResponse
-import asyncio
+from pydantic import BaseModel, Field, root_validator
 
 from app.utils.logger import get_logger
 
@@ -19,37 +19,24 @@ router = APIRouter()
 
 class ImageUrl(BaseModel):
     """Image URL model for OpenAI format"""
-    url: str = Field(
-        ...,
-        description="URL or base64 encoded image"
-    )
+
+    url: str = Field(..., description="URL or base64 encoded image")
 
 
 class MessageContent(BaseModel):
     """Message content model for OpenAI format"""
-    type: str = Field(
-        ...,
-        description="Content type: 'text' or 'image_url'"
-    )
-    text: Optional[str] = Field(
-        None,
-        description="Text content"
-    )
-    image_url: Optional[ImageUrl] = Field(
-        None,
-        description="Image URL"
-    )
+
+    type: str = Field(..., description="Content type: 'text' or 'image_url'")
+    text: Optional[str] = Field(None, description="Text content")
+    image_url: Optional[ImageUrl] = Field(None, description="Image URL")
 
 
 class Message(BaseModel):
     """Message model for OpenAI format - supports both text and vision formats"""
-    role: str = Field(
-        ...,
-        description="Message role: 'user', 'assistant', or 'system'"
-    )
+
+    role: str = Field(..., description="Message role: 'user', 'assistant', or 'system'")
     content: Union[str, List[MessageContent]] = Field(
-        ...,
-        description="Message content (string for text, list for vision)"
+        ..., description="Message content (string for text, list for vision)"
     )
 
     @root_validator(pre=True)
@@ -62,42 +49,30 @@ class Message(BaseModel):
 
 class ChatCompletionRequest(BaseModel):
     """Chat completion request model"""
-    model: str = Field(
-        default="medgemma-vision",
-        description="Model to use"
-    )
-    messages: List[Message] = Field(
-        ...,
-        description="List of messages"
-    )
+
+    model: str = Field(default="medgemma-vision", description="Model to use")
+    messages: List[Message] = Field(..., description="List of messages")
     max_tokens: Optional[int] = Field(
-        default=1000,
-        description="Maximum tokens to generate"
+        default=1000, description="Maximum tokens to generate"
     )
     temperature: Optional[float] = Field(
-        default=0.7,
-        description="Sampling temperature"
+        default=0.7, description="Sampling temperature"
     )
     stream: Optional[bool] = Field(
-        default=False,
-        description="Whether to stream the response"
+        default=False, description="Whether to stream the response"
     )
 
 
 class AssistantMessage(BaseModel):
     """Assistant message model for responses - uses text format"""
-    role: str = Field(
-        default="assistant",
-        description="Message role"
-    )
-    content: str = Field(
-        ...,
-        description="Message content as text"
-    )
+
+    role: str = Field(default="assistant", description="Message role")
+    content: str = Field(..., description="Message content as text")
 
 
 class ChatCompletionChoice(BaseModel):
     """Chat completion choice model"""
+
     index: int
     message: AssistantMessage
     finish_reason: str
@@ -105,6 +80,7 @@ class ChatCompletionChoice(BaseModel):
 
 class Usage(BaseModel):
     """Token usage model"""
+
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
@@ -112,6 +88,7 @@ class Usage(BaseModel):
 
 class ChatCompletionResponse(BaseModel):
     """Chat completion response model"""
+
     id: str
     object: str = "chat.completion"
     created: int
@@ -160,23 +137,18 @@ async def get_medgemma_response(
 async def chat_completions(request: ChatCompletionRequest):
     """Chat completions endpoint compatible with OpenAI format, with streaming support"""
     try:
-        logger.info(
-            f"Received chat completion request for model: {request.model}"
-        )
+        logger.info(f"Received chat completion request for model: {request.model}")
         if request.model != "medgemma-vision":
-            logger.warning(
-                f"Unsupported model requested: {request.model}"
-            )
+            logger.warning(f"Unsupported model requested: {request.model}")
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    f"Model {request.model} not supported. Use 'medgemma-vision'"
-                ),
+                detail=(f"Model {request.model} not supported. Use 'medgemma-vision'"),
             )
         medgemma_response = await get_medgemma_response(
             request.messages, request.max_tokens, request.temperature
         )
         if request.stream:
+
             async def event_stream():
                 tokens = medgemma_response["text"].split()
                 for i, token in enumerate(tokens):
@@ -186,11 +158,7 @@ async def chat_completions(request: ChatCompletionRequest):
                         "choices": [
                             {
                                 "index": 0,
-                                "delta": {
-                                    "content": (
-                                        " " + token
-                                    ) if i > 0 else token
-                                },
+                                "delta": {"content": (" " + token) if i > 0 else token},
                                 "finish_reason": None,
                             }
                         ],
@@ -213,9 +181,8 @@ async def chat_completions(request: ChatCompletionRequest):
                 }
                 yield f"data: {json.dumps(chunk)}\n\n"
                 yield "data: [DONE]\n\n"
-            return StreamingResponse(
-                event_stream(), media_type="text/event-stream"
-            )
+
+            return StreamingResponse(event_stream(), media_type="text/event-stream")
         content_text = medgemma_response["text"]
         response_id = f"chatcmpl-{int(time.time())}"
         response = ChatCompletionResponse(
@@ -226,23 +193,16 @@ async def chat_completions(request: ChatCompletionRequest):
             choices=[
                 ChatCompletionChoice(
                     index=0,
-                    message=AssistantMessage(
-                        role="assistant",
-                        content=content_text
-                    ),
+                    message=AssistantMessage(role="assistant", content=content_text),
                     finish_reason="stop",
                 )
             ],
             usage=Usage(
                 prompt_tokens=medgemma_response.get("tokens_used", 100),
-                completion_tokens=len(
-                    medgemma_response["text"].split()
-                ),
+                completion_tokens=len(medgemma_response["text"].split()),
                 total_tokens=(
                     medgemma_response.get("tokens_used", 100)
-                    + len(
-                        medgemma_response["text"].split()
-                    )
+                    + len(medgemma_response["text"].split())
                 ),
             ),
         )
@@ -252,7 +212,4 @@ async def chat_completions(request: ChatCompletionRequest):
         raise
     except Exception as e:
         logger.error(f"Error in chat completions: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

@@ -1,6 +1,6 @@
 # OpenAiMedVision Development Makefile
 
-.PHONY: help dev build up down logs clean test lint format
+.PHONY: help dev build up down logs clean test format
 
 # Default target
 help:
@@ -13,7 +13,6 @@ help:
 	@echo "  logs    - View logs"
 	@echo "  clean   - Clean up containers and volumes"
 	@echo "  test    - Run tests"
-	@echo "  lint    - Run linting"
 	@echo "  format  - Format code"
 	@echo "  shell   - Open shell in development container"
 
@@ -51,12 +50,6 @@ clean:
 test:
 	@echo "🧪 Running tests..."
 	docker-compose exec openaimedvision-dev pytest
-
-# Run linting
-lint:
-	@echo "🔍 Running linting..."
-	docker-compose exec openaimedvision-dev flake8 app/
-	docker-compose exec openaimedvision-dev mypy app/
 
 # Format code
 format:

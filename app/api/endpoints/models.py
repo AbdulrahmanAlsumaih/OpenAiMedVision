@@ -3,9 +3,10 @@ Models endpoint for OpenAI-compatible API
 """
 
 import time
+from typing import Any, List
+
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from typing import List, Any
 
 router = APIRouter()
 
@@ -40,8 +41,5 @@ class ModelListResponse(BaseModel):
 
 @router.get("/", response_model=ModelListResponse)
 async def list_models():
-    model = ModelInfo(
-        id="medgemma-vision",
-        permission=[ModelPermission()]
-    )
+    model = ModelInfo(id="medgemma-vision", permission=[ModelPermission()])
     return ModelListResponse(data=[model])
