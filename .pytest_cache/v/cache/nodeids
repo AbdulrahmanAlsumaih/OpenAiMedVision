@@ -10,5 +10,14 @@
   "tests/test_chat.py::test_chat_completions_with_image",
   "tests/test_chat.py::test_get_generation",
   "tests/test_chat.py::test_list_models",
-  "tests/test_chat.py::test_text_completion"
+  "tests/test_chat.py::test_text_completion",
+  "tests/test_vertex_ai.py::test_chat_completions_empty_text_handling",
+  "tests/test_vertex_ai.py::test_chat_completions_streaming_with_vertex_ai",
+  "tests/test_vertex_ai.py::test_chat_completions_vertex_ai_error_handling",
+  "tests/test_vertex_ai.py::test_chat_completions_vertex_ai_response_formatting",
+  "tests/test_vertex_ai.py::test_chat_completions_with_image_and_vertex_ai",
+  "tests/test_vertex_ai.py::test_chat_completions_with_vertex_ai",
+  "tests/test_vertex_ai.py::test_vertex_ai_health_check",
+  "tests/test_vertex_ai.py::test_vertex_ai_request_preparation",
+  "tests/test_vertex_ai.py::test_vertex_ai_service_initialization"
 ]

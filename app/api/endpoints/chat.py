@@ -100,9 +100,13 @@ class ChatCompletionResponse(BaseModel):
 async def get_medgemma_response(
     messages: List[Message], max_tokens: int, temperature: float
 ) -> Dict[str, Any]:
-    """Send request to MedGemma API and return response"""
+    """Send request to MedGemma-4b via Vertex AI and return response"""
+    from app.services.vertex_ai import vertex_ai_service
+    
     text_content = ""
     image_data = None
+    
+    # Extract text and image from messages
     for message in messages:
         if message.role == "user":
             for content in message.content:
@@ -113,24 +117,39 @@ async def get_medgemma_response(
                         image_data = content.image_url.url.split(",")[1]
                     else:
                         image_data = content.image_url.url
-    medgemma_payload = {
-        "text": text_content.strip(),
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-    }
-    if image_data:
-        medgemma_payload["image"] = image_data
-    logger.info(f"Sending request to MedGemma: {medgemma_payload}")
-    text_part1 = "Analysis of the medical image: "
-    text_part2 = text_content.strip()
-    text_part3 = ". This is a mock response from MedGemma API."
-    full_text = text_part1 + text_part2 + text_part3
-    tokens_used = len(text_content.split()) + 50
-    mock_response = {
-        "text": full_text,
-        "tokens_used": tokens_used,
-    }
-    return mock_response
+    
+    # Clean up text content
+    text_content = text_content.strip()
+    
+    if not text_content:
+        raise HTTPException(
+            status_code=422,
+            detail="No text content provided in the request"
+        )
+    
+    logger.info(f"Preparing request for MedGemma-4b: text='{text_content[:100]}...', has_image={image_data is not None}")
+    
+    try:
+        # Call Vertex AI service
+        response = await vertex_ai_service.predict_medgemma(
+            text=text_content,
+            image_data=image_data,
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
+        
+        logger.info(f"MedGemma-4b response received: {len(response.get('text', ''))} characters")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error calling MedGemma-4b via Vertex AI: {str(e)}")
+        # Fallback to mock response in case of error
+        fallback_text = f"Analysis of the medical image: {text_content}. This is a fallback response due to Vertex AI error: {str(e)}"
+        return {
+            "text": fallback_text,
+            "tokens_used": len(text_content.split()) + 50,
+            "error": str(e)
+        }
 
 
 @router.post("/completions", response_model=ChatCompletionResponse)

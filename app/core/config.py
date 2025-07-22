@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     RATE_LIMIT_PER_HOUR: int = 1000
+    
+    # Google Cloud & Vertex AI
+    GOOGLE_CLOUD_PROJECT: str = "your-project-id"
+    GOOGLE_CLOUD_LOCATION: str = "us-central1"
+    VERTEX_AI_ENDPOINT_ID: str = "your-endpoint-id"
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
 
     @property
     def allowed_origins_list(self) -> List[str]:

@@ -8,7 +8,7 @@ A medical-focused API router for vision-language models with OpenAI-compatible e
 
 OpenAiMedVision is a unified API gateway that provides medical professionals and researchers with easy access to state-of-the-art vision-language models for medical image analysis. The service follows OpenAI's API format, making it a drop-in replacement for existing medical AI workflows.
 
-**This project does NOT run models locally. It acts as a router/gateway to external LLM APIs.**
+**This project does NOT run models locally. It acts as a router/gateway to external LLM APIs via Google Cloud Vertex AI.**
 
 ### Key Features
 - **🔄 Unified API Endpoint**: Single endpoint compatible with OpenAI's vision API format
@@ -19,9 +19,9 @@ OpenAiMedVision is a unified API gateway that provides medical professionals and
 - **🔒 Production Ready**: Built with FastAPI for high performance and scalability
 
 ## 🚀 Supported Models/APIs
-- **MedGemma Vision-Text API**
-- **GPT-4 Vision API**
-- **LLaVA API**
+- **MedGemma-4b via Vertex AI** (Primary)
+- **GPT-4 Vision API** (Future)
+- **LLaVA API** (Future)
 - (Pluggable for more in the future)
 
 ## 🛠️ Tech Stack
@@ -57,6 +57,43 @@ OpenAiMedVision/
 ### Prerequisites
 - Docker & Docker Compose
 - Git
+- Google Cloud Project with Vertex AI enabled
+- MedGemma-4b model deployed on Vertex AI
+
+### Quick Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd OpenAiMedVision
+   ```
+
+2. **Set up Google Cloud credentials**
+   ```bash
+   # Copy your Google Cloud credentials
+   cp ~/.config/gcloud/application_default_credentials.json ./gcloud-credentials.json
+   ```
+
+3. **Configure environment variables**
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit .env with your actual values
+   nano .env
+   ```
+
+4. **Update .env with your values:**
+   ```bash
+   GOOGLE_CLOUD_PROJECT=your-actual-project-id
+   GOOGLE_CLOUD_LOCATION=us-central1
+   VERTEX_AI_ENDPOINT_ID=your-actual-endpoint-id
+   ```
+
+5. **Start the development environment**
+   ```bash
+   make up
+   ```
 
 ### Development Workflow
 
@@ -66,7 +103,13 @@ OpenAiMedVision/
    cd OpenAiMedVision
    ```
 
-2. **Start the development environment**
+2. **Configure Google Cloud credentials**
+   ```bash
+   # Set up service account and download credentials
+   export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account.json"
+   ```
+
+3. **Start the development environment**
    ```bash
    ./dev.sh
    # or
@@ -115,6 +158,12 @@ MODEL_TIMEOUT=30
 # Security
 API_KEY_HEADER=X-API-Key
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+
+# Google Cloud & Vertex AI
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+VERTEX_AI_ENDPOINT_ID=your-endpoint-id
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 
 # Docker Registry (for CI/CD)
 DOCKER_REGISTRY=ghcr.io
