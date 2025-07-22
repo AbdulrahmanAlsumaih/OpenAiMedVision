@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     # Model Configuration
-    DEFAULT_MODEL: str = "medgemma-vision"
+    DEFAULT_MODEL: str = "medgemma-4b-it"
     MODEL_TIMEOUT: int = 30
     MAX_TOKENS: int = 1000
     TEMPERATURE: float = 0.7

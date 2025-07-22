@@ -48,15 +48,30 @@ class Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    """Chat completion request model"""
+    """Chat completion request model - supports all Open WebUI parameters"""
 
-    model: str = Field(default="medgemma-vision", description="Model to use")
+    model: str = Field(default="medgemma-4b-it", description="Model to use")
     messages: List[Message] = Field(..., description="List of messages")
     max_tokens: Optional[int] = Field(
         default=1000, description="Maximum tokens to generate"
     )
     temperature: Optional[float] = Field(
         default=0.7, description="Sampling temperature"
+    )
+    top_p: Optional[float] = Field(
+        default=1.0, description="Nucleus sampling parameter"
+    )
+    frequency_penalty: Optional[float] = Field(
+        default=0.0, description="Frequency penalty"
+    )
+    presence_penalty: Optional[float] = Field(
+        default=0.0, description="Presence penalty"
+    )
+    stop: Optional[Union[str, List[str]]] = Field(
+        default=None, description="Stop sequences"
+    )
+    n: Optional[int] = Field(
+        default=1, description="Number of choices to generate"
     )
     stream: Optional[bool] = Field(
         default=False, description="Whether to stream the response"
@@ -98,44 +113,65 @@ class ChatCompletionResponse(BaseModel):
 
 
 async def get_medgemma_response(
-    messages: List[Message], max_tokens: int, temperature: float
+    messages: List[Message], max_tokens: int, temperature: float,
+    top_p: float = 1.0, frequency_penalty: float = 0.0, presence_penalty: float = 0.0,
+    stop: Optional[Union[str, List[str]]] = None, n: int = 1
 ) -> Dict[str, Any]:
     """Send request to MedGemma-4b via Vertex AI and return response"""
     from app.services.vertex_ai import vertex_ai_service
     
-    text_content = ""
+    system_prompt = ""
+    user_content = ""
     image_data = None
     
-    # Extract text and image from messages
+    # Process all messages to extract system prompt, user content, and images
     for message in messages:
-        if message.role == "user":
+        if message.role == "system":
+            # Extract system prompt
             for content in message.content:
                 if content.type == "text" and content.text:
-                    text_content += content.text + " "
+                    system_prompt += content.text + " "
+        elif message.role == "user":
+            # Extract user content and images
+            for content in message.content:
+                if content.type == "text" and content.text:
+                    user_content += content.text + " "
                 elif content.type == "image_url" and content.image_url:
                     if content.image_url.url.startswith("data:image"):
                         image_data = content.image_url.url.split(",")[1]
                     else:
                         image_data = content.image_url.url
     
-    # Clean up text content
-    text_content = text_content.strip()
+    # Clean up content
+    system_prompt = system_prompt.strip()
+    user_content = user_content.strip()
     
-    if not text_content:
+    # Combine system prompt with user content if system prompt exists
+    if system_prompt:
+        final_text = f"{system_prompt}\n\n{user_content}"
+    else:
+        final_text = user_content
+    
+    if not final_text:
         raise HTTPException(
             status_code=422,
             detail="No text content provided in the request"
         )
     
-    logger.info(f"Preparing request for MedGemma-4b: text='{text_content[:100]}...', has_image={image_data is not None}")
+    logger.info(f"Preparing request for MedGemma-4b: system_prompt='{system_prompt[:50]}...', user_content='{user_content[:50]}...', has_image={image_data is not None}")
     
     try:
-        # Call Vertex AI service
+        # Call Vertex AI service with all parameters
         response = await vertex_ai_service.predict_medgemma(
-            text=text_content,
+            text=final_text,
             image_data=image_data,
             max_tokens=max_tokens,
-            temperature=temperature
+            temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=stop,
+            n=n
         )
         
         logger.info(f"MedGemma-4b response received: {len(response.get('text', ''))} characters")
@@ -144,10 +180,10 @@ async def get_medgemma_response(
     except Exception as e:
         logger.error(f"Error calling MedGemma-4b via Vertex AI: {str(e)}")
         # Fallback to mock response in case of error
-        fallback_text = f"Analysis of the medical image: {text_content}. This is a fallback response due to Vertex AI error: {str(e)}"
+        fallback_text = f"Analysis of the medical image: {final_text}. This is a fallback response due to Vertex AI error: {str(e)}"
         return {
             "text": fallback_text,
-            "tokens_used": len(text_content.split()) + 50,
+            "tokens_used": len(final_text.split()) + 50,
             "error": str(e)
         }
 
@@ -157,14 +193,16 @@ async def chat_completions(request: ChatCompletionRequest):
     """Chat completions endpoint compatible with OpenAI format, with streaming support"""
     try:
         logger.info(f"Received chat completion request for model: {request.model}")
-        if request.model != "medgemma-vision":
+        if request.model != "medgemma-4b-it":
             logger.warning(f"Unsupported model requested: {request.model}")
             raise HTTPException(
                 status_code=400,
-                detail=(f"Model {request.model} not supported. Use 'medgemma-vision'"),
+                detail=(f"Model {request.model} not supported. Use 'medgemma-4b-it'"),
             )
         medgemma_response = await get_medgemma_response(
-            request.messages, request.max_tokens, request.temperature
+            request.messages, request.max_tokens, request.temperature,
+            request.top_p, request.frequency_penalty, request.presence_penalty,
+            request.stop, request.n
         )
         if request.stream:
 

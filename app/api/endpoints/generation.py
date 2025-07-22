@@ -16,7 +16,7 @@ class GenerationData(BaseModel):
     created_at: str = Field(
         default_factory=lambda: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     )
-    model: str = "medgemma-vision"
+    model: str = "medgemma-4b-it"
     origin: str = "mock"
     usage: float = 1.1
     finish_reason: str = "stop"

@@ -5,7 +5,7 @@ Vertex AI service for MedGemma-4b model integration
 import base64
 import json
 import subprocess
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 import asyncio
 
 import httpx
@@ -54,42 +54,90 @@ class VertexAIService:
         return f"https://{self.endpoint_id}.{self.location}-103350176976.prediction.vertexai.goog/v1/projects/{self.project_id}/locations/{self.location}/endpoints/{self.endpoint_id}:predict"
     
     def _prepare_medgemma_request(self, text: str, image_data: Optional[str] = None, 
-                                 max_tokens: int = 1000, temperature: float = 0.7) -> Dict[str, Any]:
-        """Prepare request payload for MedGemma-4b model"""
+                                 max_tokens: int = 1000, temperature: float = 0.7,
+                                 top_p: float = 1.0, frequency_penalty: float = 0.0,
+                                 presence_penalty: float = 0.0, stop: Optional[Union[str, List[str]]] = None,
+                                 n: int = 1) -> Dict[str, Any]:
+        """Prepare request payload for MedGemma-4b model with all Open WebUI parameters"""
         
-        # Prepare content array
-        content = [{"type": "text", "text": text}]
+        # Parse the text to separate system prompt from user content
+        messages = []
         
-        # Add image if provided
-        if image_data:
-            # Remove data URL prefix if present
-            if image_data.startswith("data:image"):
-                image_data = image_data.split(",", 1)[1]
+        # Check if text contains a system prompt (indicated by newlines)
+        if "\n\n" in text:
+            parts = text.split("\n\n", 1)
+            system_prompt = parts[0].strip()
+            user_content = parts[1].strip()
             
-            # Add image to content
-            content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}
+            # Try a more direct approach for MedGemma
+            # Use a format that might be more effective for instruction following
+            combined_content = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{user_content}<|im_end|>\n<|im_start|>assistant\n"
+            
+            # Add user message with embedded system prompt
+            user_content_list = [{"type": "text", "text": combined_content}]
+            
+            # Add image if provided
+            if image_data:
+                # Remove data URL prefix if present
+                if image_data.startswith("data:image"):
+                    image_data = image_data.split(",", 1)[1]
+                
+                user_content_list.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}
+                })
+            
+            messages.append({
+                "role": "user",
+                "content": user_content_list
+            })
+        else:
+            # No system prompt, just user content
+            user_content_list = [{"type": "text", "text": text}]
+            
+            # Add image if provided
+            if image_data:
+                # Remove data URL prefix if present
+                if image_data.startswith("data:image"):
+                    image_data = image_data.split(",", 1)[1]
+                
+                user_content_list.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}
+                })
+            
+            messages.append({
+                "role": "user",
+                "content": user_content_list
             })
         
         # Create the request in the correct format
         request_data = {
             "@requestFormat": "chatCompletions",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": content
-                }
-            ],
+            "messages": messages,
             "max_tokens": max_tokens,
-            "temperature": temperature
+            "temperature": temperature,
+            "top_p": top_p,
+            "frequency_penalty": frequency_penalty,
+            "presence_penalty": presence_penalty,
+            "n": n
         }
+        
+        # Add stop sequences if provided
+        if stop:
+            if isinstance(stop, str):
+                request_data["stop"] = [stop]
+            else:
+                request_data["stop"] = stop
         
         return request_data
     
     async def predict_medgemma(self, text: str, image_data: Optional[str] = None,
-                              max_tokens: int = 1000, temperature: float = 0.7) -> Dict[str, Any]:
-        """Make prediction request to MedGemma-4b model"""
+                              max_tokens: int = 1000, temperature: float = 0.7,
+                              top_p: float = 1.0, frequency_penalty: float = 0.0,
+                              presence_penalty: float = 0.0, stop: Optional[Union[str, List[str]]] = None,
+                              n: int = 1) -> Dict[str, Any]:
+        """Make prediction request to MedGemma-4b model with all Open WebUI parameters"""
         
         try:
             # Prepare the request
@@ -97,7 +145,12 @@ class VertexAIService:
                 text=text,
                 image_data=image_data,
                 max_tokens=max_tokens,
-                temperature=temperature
+                temperature=temperature,
+                top_p=top_p,
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty,
+                stop=stop,
+                n=n
             )
             
             # Create the full request structure
@@ -255,7 +308,7 @@ class VertexAIService:
         return {
             "text": generated_text,
             "tokens_used": tokens_used,
-            "model": "medgemma-4b",
+            "model": "medgemma-4b-it",
             "vertex_response": vertex_response  # Keep original for debugging
         }
     

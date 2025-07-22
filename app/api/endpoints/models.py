@@ -41,5 +41,5 @@ class ModelListResponse(BaseModel):
 
 @router.get("/", response_model=ModelListResponse)
 async def list_models():
-    model = ModelInfo(id="medgemma-vision", permission=[ModelPermission()])
+    model = ModelInfo(id="medgemma-4b-it", permission=[ModelPermission()])
     return ModelListResponse(data=[model])
