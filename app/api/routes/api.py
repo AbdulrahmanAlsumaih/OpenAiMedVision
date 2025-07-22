@@ -5,7 +5,6 @@ Main API router configuration
 from fastapi import APIRouter
 
 from app.api.endpoints.chat import router as chat_router
-from app.api.endpoints.completions import router as completions_router
 from app.api.endpoints.generation import router as generation_router
 from app.api.endpoints.models import router as models_router
 
@@ -19,10 +18,6 @@ api_router.include_router(chat_router, prefix="/chat", tags=["chat"])
 # Include models router
 api_router.include_router(models_router, prefix="/models", tags=["models"])
 
-# Include completions router
-api_router.include_router(
-    completions_router, prefix="/completions", tags=["completions"]
-)
 
 # Include generation router
 api_router.include_router(generation_router, prefix="/generation", tags=["generation"])

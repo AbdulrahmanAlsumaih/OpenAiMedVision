@@ -179,21 +179,7 @@ def test_list_models():
     assert any(model["id"] == "medgemma-vision" for model in data["data"]) 
 
 
-def test_text_completion():
-    """Test POST /v1/completions returns a mock completion"""
-    payload = {
-        "model": "medgemma-vision",
-        "prompt": "What is the meaning of life?",
-        "max_tokens": 1000
-    }
-    response = client.post("/v1/completions", json=payload)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["object"] == "text_completion"
-    assert data["model"] == "medgemma-vision"
-    assert isinstance(data["choices"], list)
-    assert data["choices"][0]["text"].startswith("[MOCK COMPLETION]")
-    assert data["choices"][0]["finish_reason"] == "stop" 
+ 
 
 
 def test_get_generation():
