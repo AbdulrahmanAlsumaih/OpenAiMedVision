@@ -49,10 +49,11 @@ ehthumbs.db
 Thumbs.db
 
 # Google Cloud & Credentials
-*.json
+gcloud-credentials.json
 credentials/
 key.json
 service-account-key.json
+*.key.json
 .env.local
 .env.production
 
