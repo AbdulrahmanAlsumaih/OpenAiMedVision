@@ -19,13 +19,11 @@ services:
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
       - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
       - VERTEX_AI_ENDPOINT_ID=${VERTEX_AI_ENDPOINT_ID}
-      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
 
     volumes:
       - .:/app
       - /app/__pycache__
       - /app/.pytest_cache
-      - ./gcloud-credentials.json:/app/gcloud-credentials.json:ro
     env_file:
       - .env
 
