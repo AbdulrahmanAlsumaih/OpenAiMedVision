@@ -66,11 +66,46 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Health check endpoint"""
+        from app.services.vertex_ai import vertex_ai_service
+        
+        # Check Vertex AI service health
+        vertex_ai_healthy = vertex_ai_service.health_check()
+        
+        # Check authentication status
+        auth_status = "unknown"
+        auth_details = {}
+        
+        try:
+            # Try to get an access token to test authentication
+            access_token = vertex_ai_service._get_access_token()
+            auth_status = "authenticated"
+            auth_details = {"token_length": len(access_token) if access_token else 0}
+        except Exception as e:
+            auth_status = "failed"
+            auth_details = {"error": str(e)}
+            
+            # Check for specific authentication issues
+            if "gcloud" in str(e).lower():
+                auth_details["issue"] = "gcloud_command_not_found"
+                auth_details["solution"] = "Install Google Cloud SDK or use service account credentials"
+            elif "credentials" in str(e).lower():
+                auth_details["issue"] = "credentials_not_found"
+                auth_details["solution"] = "Set GOOGLE_APPLICATION_CREDENTIALS or place credentials file"
+        
         return {
-            "status": "healthy",
+            "status": "healthy" if vertex_ai_healthy else "degraded",
             "service": "OpenAiMedVision",
             "version": "1.0.0",
-            "environment": settings.ENVIRONMENT
+            "environment": settings.ENVIRONMENT,
+            "components": {
+                "vertex_ai": {
+                    "status": "healthy" if vertex_ai_healthy else "unhealthy",
+                    "authentication": {
+                        "status": auth_status,
+                        "details": auth_details
+                    }
+                }
+            }
         }
     
     # Root endpoint
@@ -81,8 +116,59 @@ def create_app() -> FastAPI:
             "message": "OpenAiMedVision API Gateway",
             "version": "1.0.0",
             "docs": "/docs" if settings.DEBUG else "Documentation disabled in production",
-            "health": "/health"
+            "health": "/health",
+            "auth_diagnostic": "/auth-diagnostic"
         }
+    
+    # Authentication diagnostic endpoint
+    @app.get("/auth-diagnostic")
+    async def auth_diagnostic():
+        """Detailed authentication diagnostic endpoint"""
+        from app.services.vertex_ai import vertex_ai_service
+        import os
+        
+        diagnostic = {
+            "timestamp": "2024-01-01T00:00:00Z",  # You can add datetime import if needed
+            "environment": {
+                "GOOGLE_CLOUD_PROJECT": settings.GOOGLE_CLOUD_PROJECT,
+                "GOOGLE_CLOUD_LOCATION": settings.GOOGLE_CLOUD_LOCATION,
+                "VERTEX_AI_ENDPOINT_ID": settings.VERTEX_AI_ENDPOINT_ID,
+                "GOOGLE_APPLICATION_CREDENTIALS": settings.GOOGLE_APPLICATION_CREDENTIALS,
+                "ENVIRONMENT": settings.ENVIRONMENT
+            },
+            "file_checks": {
+                "credentials_file_exists": os.path.exists("/app/gcloud-credentials.json"),
+                "credentials_file_readable": os.access("/app/gcloud-credentials.json", os.R_OK) if os.path.exists("/app/gcloud-credentials.json") else False,
+                "env_credentials_exists": os.path.exists(settings.GOOGLE_APPLICATION_CREDENTIALS) if settings.GOOGLE_APPLICATION_CREDENTIALS else False
+            },
+            "command_checks": {
+                "gcloud_available": False,
+                "gcloud_version": None
+            },
+            "authentication_tests": {}
+        }
+        
+        # Check if gcloud is available
+        try:
+            import subprocess
+            result = subprocess.run(["gcloud", "--version"], capture_output=True, text=True)
+            diagnostic["command_checks"]["gcloud_available"] = result.returncode == 0
+            if result.returncode == 0:
+                diagnostic["command_checks"]["gcloud_version"] = result.stdout.split('\n')[0]
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            diagnostic["command_checks"]["gcloud_available"] = False
+        
+        # Test authentication methods
+        try:
+            access_token = vertex_ai_service._get_access_token()
+            diagnostic["authentication_tests"]["success"] = True
+            diagnostic["authentication_tests"]["token_length"] = len(access_token) if access_token else 0
+        except Exception as e:
+            diagnostic["authentication_tests"]["success"] = False
+            diagnostic["authentication_tests"]["error"] = str(e)
+            diagnostic["authentication_tests"]["error_type"] = type(e).__name__
+        
+        return diagnostic
     
     # Global exception handler
     @app.exception_handler(Exception)

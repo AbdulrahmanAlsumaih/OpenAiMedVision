@@ -178,13 +178,46 @@ async def get_medgemma_response(
         return response
         
     except Exception as e:
-        logger.error(f"Error calling MedGemma-4b via Vertex AI: {str(e)}")
-        # Fallback to mock response in case of error
-        fallback_text = f"Analysis of the medical image: {final_text}. This is a fallback response due to Vertex AI error: {str(e)}"
+        error_message = str(e)
+        logger.error(f"Error calling MedGemma-4b via Vertex AI: {error_message}")
+        
+        # Check if this is an authentication error
+        if "Authentication Error:" in error_message:
+            # Extract the error details from the exception
+            try:
+                import ast
+                # Find the error details in the message
+                start_idx = error_message.find("{")
+                if start_idx != -1:
+                    error_json_str = error_message[start_idx:]
+                    error_details = ast.literal_eval(error_json_str)
+                    
+                    # Create a user-friendly error message
+                    user_error_message = f"""Google Cloud authentication failed. 
+
+Error Details:
+- Default credentials: {error_details.get('details', {}).get('default_credentials_error', 'Unknown')}
+- Credentials file: {error_details.get('details', {}).get('credentials_file_error', 'Unknown')}
+- gcloud command: {error_details.get('details', {}).get('gcloud_command_error', 'Unknown')}
+
+Solutions:
+{chr(10).join(f"- {solution}" for solution in error_details.get('solutions', []))}
+
+Please set up Google Cloud authentication and try again."""
+                else:
+                    user_error_message = f"Authentication error: {error_message}"
+            except:
+                user_error_message = f"Authentication error: {error_message}"
+        else:
+            user_error_message = f"Vertex AI service error: {error_message}"
+        
+        # Return a fallback response with detailed error information
+        fallback_text = f"Analysis of the medical image: {final_text}. This is a fallback response due to Vertex AI error: {user_error_message}"
         return {
             "text": fallback_text,
             "tokens_used": len(final_text.split()) + 50,
-            "error": str(e)
+            "error": user_error_message,
+            "error_type": "vertex_ai_error"
         }
 
 

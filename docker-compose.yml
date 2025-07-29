@@ -19,6 +19,7 @@ services:
       - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us-central1}
       - VERTEX_AI_ENDPOINT_ID=${VERTEX_AI_ENDPOINT_ID:-your-endpoint-id}
       - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+
     volumes:
       - .:/app
       - /app/__pycache__

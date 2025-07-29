@@ -194,6 +194,14 @@ class VertexAIService:
     
     def _get_access_token(self) -> str:
         """Get Google Cloud access token"""
+        import os
+        
+        # First, try to get token from environment variable (easiest for users)
+        env_token = os.getenv("GOOGLE_ACCESS_TOKEN")
+        if env_token:
+            logger.info("Using access token from environment variable")
+            return env_token
+        
         try:
             from google.auth import default
             from google.auth.transport.requests import Request
@@ -210,7 +218,6 @@ class VertexAIService:
             # Try to use the mounted credentials file
             try:
                 import json
-                import os
                 
                 creds_path = "/app/gcloud-credentials.json"
                 if os.path.exists(creds_path):
@@ -242,9 +249,28 @@ class VertexAIService:
                         check=True
                     )
                     return result.stdout.strip()
-                except subprocess.CalledProcessError as e3:
+                except (subprocess.CalledProcessError, FileNotFoundError) as e3:
                     logger.error(f"Failed to get access token via gcloud: {e3}")
-                    raise Exception(f"All authentication methods failed: {e}, {e2}, {e3}")
+                    logger.error("gcloud command not found. Please install Google Cloud SDK or use service account credentials.")
+                    
+                    # Create a detailed error message for the user
+                    error_details = {
+                        "error_type": "authentication_failure",
+                        "message": "Google Cloud authentication failed",
+                        "details": {
+                            "default_credentials_error": str(e),
+                            "credentials_file_error": str(e2),
+                            "gcloud_command_error": str(e3)
+                        },
+                        "solutions": [
+                            "Set GOOGLE_ACCESS_TOKEN environment variable with your access token",
+                            "Install Google Cloud SDK and run 'gcloud auth login'",
+                            "Create a service account key and set GOOGLE_APPLICATION_CREDENTIALS",
+                            "Place service account JSON file at /app/gcloud-credentials.json"
+                        ]
+                    }
+                    
+                    raise Exception(f"Authentication Error: {error_details}")
     
     def _format_response(self, vertex_response: Dict[str, Any], original_text: str) -> Dict[str, Any]:
         """Format Vertex AI response to match our expected structure"""
