@@ -8,17 +8,18 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=development
-      - DEBUG=true
-      - HOST=0.0.0.0
-      - PORT=8000
-      - LOG_LEVEL=DEBUG
-      - LOG_FORMAT=console
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000
-      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-your-project-id}
-      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us-central1}
-      - VERTEX_AI_ENDPOINT_ID=${VERTEX_AI_ENDPOINT_ID:-your-endpoint-id}
-      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+      # These will be loaded from .env file
+      - ENVIRONMENT=${ENVIRONMENT}
+      - DEBUG=${DEBUG}
+      - HOST=${HOST}
+      - PORT=${PORT}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_FORMAT=${LOG_FORMAT}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
+      - VERTEX_AI_ENDPOINT_ID=${VERTEX_AI_ENDPOINT_ID}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
 
     volumes:
       - .:/app

@@ -41,9 +41,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_HOUR: int = 1000
     
     # Google Cloud & Vertex AI
-    GOOGLE_CLOUD_PROJECT: str = "your-project-id"
+    GOOGLE_CLOUD_PROJECT: str = ""
     GOOGLE_CLOUD_LOCATION: str = "us-central1"
-    VERTEX_AI_ENDPOINT_ID: str = "your-endpoint-id"
+    VERTEX_AI_ENDPOINT_ID: str = ""
     GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
 
     @property
@@ -57,10 +57,25 @@ class Settings(BaseSettings):
         if "ENVIRONMENT" in values:
             return values["ENVIRONMENT"] == "development"
         return v
+    
+    @validator("GOOGLE_CLOUD_PROJECT")
+    def validate_google_cloud_project(cls, v):
+        """Validate Google Cloud Project ID"""
+        if not v:
+            raise ValueError("GOOGLE_CLOUD_PROJECT is required")
+        return v
+    
+    @validator("VERTEX_AI_ENDPOINT_ID")
+    def validate_vertex_ai_endpoint_id(cls, v):
+        """Validate Vertex AI Endpoint ID"""
+        if not v:
+            raise ValueError("VERTEX_AI_ENDPOINT_ID is required")
+        return v
 
     class Config:
         env_file = ".env"
         case_sensitive = True
+        env_file_encoding = "utf-8"
 
 
 # Create settings instance
@@ -70,3 +85,41 @@ settings = Settings()
 def get_settings() -> Settings:
     """Get application settings"""
     return settings
+
+
+def print_environment_info():
+    """Print current environment configuration for debugging"""
+    import os
+    from app.utils.logger import get_logger
+    
+    logger = get_logger(__name__)
+    
+    logger.info("=== Environment Configuration ===")
+    
+    # Check required variables
+    required_vars = [
+        'ENVIRONMENT', 'DEBUG', 'GOOGLE_CLOUD_PROJECT', 
+        'GOOGLE_CLOUD_LOCATION', 'VERTEX_AI_ENDPOINT_ID'
+    ]
+    
+    for var in required_vars:
+        value = os.getenv(var)
+        if value:
+            logger.info(f"✓ {var}: {value}")
+        else:
+            logger.warning(f"✗ {var}: Not set (required)")
+    
+    # Check optional variables
+    optional_vars = [
+        'GOOGLE_APPLICATION_CREDENTIALS', 'LOG_LEVEL', 
+        'ALLOWED_ORIGINS', 'HOST', 'PORT'
+    ]
+    
+    for var in optional_vars:
+        value = os.getenv(var)
+        if value:
+            logger.info(f"✓ {var}: {value}")
+        else:
+            logger.info(f"- {var}: Not set (optional)")
+    
+    logger.info("=== End Environment Configuration ===")

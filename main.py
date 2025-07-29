@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 # Add the app directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), "app"))
 
-from app.core.config import settings
+from app.core.config import settings, print_environment_info
 from app.api.routes.api import api_router
 from app.utils.logger import setup_logging
 
@@ -31,6 +31,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting OpenAiMedVision API Gateway...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
+    
+    # Print environment configuration for debugging
+    print_environment_info()
     
     yield
     
@@ -117,7 +120,23 @@ def create_app() -> FastAPI:
             "version": "1.0.0",
             "docs": "/docs" if settings.DEBUG else "Documentation disabled in production",
             "health": "/health",
-            "auth_diagnostic": "/auth-diagnostic"
+            "auth_diagnostic": "/auth-diagnostic",
+            "env_test": "/env-test"
+        }
+    
+    # Environment test endpoint
+    @app.get("/env-test")
+    async def env_test():
+        """Test endpoint to verify environment variables are loaded"""
+        return {
+            "environment": settings.ENVIRONMENT,
+            "debug": settings.DEBUG,
+            "google_cloud_project": settings.GOOGLE_CLOUD_PROJECT,
+            "google_cloud_location": settings.GOOGLE_CLOUD_LOCATION,
+            "vertex_ai_endpoint_id": settings.VERTEX_AI_ENDPOINT_ID,
+            "google_application_credentials": settings.GOOGLE_APPLICATION_CREDENTIALS,
+            "log_level": settings.LOG_LEVEL,
+            "allowed_origins": settings.ALLOWED_ORIGINS
         }
     
     # Authentication diagnostic endpoint
